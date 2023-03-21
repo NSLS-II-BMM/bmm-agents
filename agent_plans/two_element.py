@@ -57,6 +57,8 @@ def agent_move_and_measure(
         Absolute motor position for the xafs detector for the Cu measurement.
     elem2_det_position : float
         Absolute motor position for the xafs detector for the Ti measurement.
+    elements : Sequence[str]
+        List of element symbols
 
     md : Optional[dict]
         Metadata
