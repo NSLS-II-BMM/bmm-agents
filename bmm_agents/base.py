@@ -2,7 +2,6 @@ import ast
 import uuid
 from abc import ABC
 from typing import List, Literal, Optional, Sequence, Tuple
-from xml.dom.minidom import Element
 
 import nslsii.kafka_utils
 import numpy as np
@@ -40,7 +39,7 @@ class BMMBaseAgent(Agent, ABC):
         self._edge = edge
         self._exp_mode = exp_mode
         self._abscissa = exp_data_type
-        self._ordinate = "k" if exp_data_type == "chi" else "E"  # TODO: Bruce is this E upper or lowercase?
+        self._ordinate = "k" if exp_data_type == "chi" else "energy"
         self._elements = elements
         self._element_origins = np.array(element_origins)
         self._element_det_positions = np.array(element_det_positions)
@@ -88,7 +87,7 @@ class BMMBaseAgent(Agent, ABC):
     @exp_data_type.setter
     def exp_data_type(self, value: Literal["chi", "mu"]):
         self._abscissa = value
-        self._ordinate = "k" if value == "chi" else "E"  # TODO: Bruce is this E upper or lowercase?
+        self._ordinate = "k" if value == "chi" else "energy"
         self.close_and_restart(clear_tell_cache=True)
 
     @property
