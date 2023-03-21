@@ -2,6 +2,7 @@ import ast
 import uuid
 from abc import ABC
 from typing import List, Literal, Optional, Sequence, Tuple
+from xml.dom.minidom import Element
 
 import nslsii.kafka_utils
 import numpy as np
@@ -198,9 +199,11 @@ class BMMBaseAgent(Agent, ABC):
             *(self.element_origins[:, 0] + relative_point),
             self.sample_position_motors[1],
             *self.element_origins[:, 1],
+            *self.element_det_positions,
         ]
 
         kwargs = dict(
+            elements=self.elements,
             filename=self.filename,
             nscans=1,
             start="next",
@@ -213,12 +216,6 @@ class BMMBaseAgent(Agent, ABC):
             times=self.exp_times,
             snapshots=False,
             md={"relative_position": relative_point},
-        )
-        kwargs.update(
-            {
-                f"{element}_det_position": det_position
-                for element, det_position in zip(self.elements, self.element_det_positions)
-            }
         )
 
         return "agent_move_and_measure", args, kwargs
