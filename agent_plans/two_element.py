@@ -32,6 +32,7 @@ def agent_move_and_measure(
     elem2_det_position,
     *,
     elements: Sequence[str],
+    edges: Sequence[str],
     md=None,
     **kwargs,
 ):
@@ -86,9 +87,10 @@ def agent_move_and_measure(
         _md[f"{elements[0]}_det_position"] = xafs_det.position
         _md.update(md or {})
         yield from bps.mv(slits3.vsize, 0.1)
-        yield from change_edge(elements[0], focus=True)
+        if rkvs.get("BMM:pds:element").decode("utf-8") != elements[0]:
+            yield from change_edge(elements[0], focus=True)
         # xafs doesn't take md, so stuff it into a comment string to be ast.literal_eval()
-        yield from xafs(element=elements[0], comment=str(_md), **kwargs)
+        yield from xafs(element=elements[0], edge=edges[0], comment=str(_md), **kwargs)
 
     def elem2_plan():
         yield from bps.mv(motor_x, elem2_x_position)
@@ -98,8 +100,9 @@ def agent_move_and_measure(
         _md[f"{elements[1]}_det_position"] = xafs_det.position
         _md.update(md or {})
         yield from bps.mv(slits3.vsize, 0.3)
-        yield from change_edge(elements[1], focus=True)
-        yield from xafs(element=elements[1], comment=str(_md), **kwargs)
+        if rkvs.get("BMM:pds:element").decode("utf-8") != elements[1]:
+            yield from change_edge(elements[1], focus=True)
+        yield from xafs(element=elements[1], edge=edges[1], comment=str(_md), **kwargs)
 
     rkvs = redis.Redis(host="xf06bm-ioc2", port=6379, db=0)
     element = rkvs.get("BMM:pds:element").decode("utf-8")

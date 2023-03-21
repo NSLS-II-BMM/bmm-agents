@@ -21,10 +21,10 @@ class BMMBaseAgent(Agent, ABC):
         self,
         *args,
         filename: str,
-        edge: str,
         exp_mode: Literal["fluorescence", "transmission"],
         exp_data_type: Literal["chi", "mu"],
         elements: Sequence[str],
+        edges: Sequence[str],
         element_origins: Sequence[Tuple[float, float]],
         element_det_positions: Sequence[float],
         roi: Optional[Tuple] = None,
@@ -36,7 +36,7 @@ class BMMBaseAgent(Agent, ABC):
         **kwargs,
     ):
         self._filename = filename
-        self._edge = edge
+        self._edges = edges
         self._exp_mode = exp_mode
         self._abscissa = exp_data_type
         self._ordinate = "k" if exp_data_type == "chi" else "energy"
@@ -64,12 +64,12 @@ class BMMBaseAgent(Agent, ABC):
         self._filename = value
 
     @property
-    def edge(self):
-        return self._edge
+    def edges(self):
+        return self._edges
 
-    @edge.setter
-    def edge(self, value: str):
-        self._edge = value
+    @edges.setter
+    def edges(self, value: Sequence[str]):
+        self._edges = value
 
     @property
     def exp_mode(self):
@@ -203,11 +203,11 @@ class BMMBaseAgent(Agent, ABC):
 
         kwargs = dict(
             elements=self.elements,
+            edges=self.edges,
             filename=self.filename,
             nscans=1,
             start="next",
             mode=self.exp_mode,
-            edge=self.edge,
             sample=self.sample,
             preparation=self.preparation,
             bounds=self.exp_bounds,
