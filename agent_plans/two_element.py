@@ -31,7 +31,7 @@ def agent_move_and_measure(
     elem1_det_position,
     elem2_det_position,
     *,
-    elements=Sequence[str],
+    elements: Sequence[str],
     md=None,
     **kwargs,
 ):
