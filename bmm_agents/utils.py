@@ -1,10 +1,22 @@
 # Borrowed from https://github.com/NSLS-II-BMM/profile_collection/blob/master/startup/BMM/larch_interface.py
 import larch.utils.show as lus
 import numpy
+import numpy as np
 from larch import Group, Interpreter
 from larch.xafs import autobk, find_e0, pre_edge, xftf
 
 LARCH = Interpreter()
+
+
+def discretize(value: np.typing.ArrayLike, resolution: np.typing.ArrayLike):
+    return np.floor(value / resolution)
+
+
+def make_hashable(x):
+    try:
+        return tuple(map(float, x))
+    except TypeError:
+        return float(x)
 
 
 class Pandrosus:
