@@ -189,8 +189,7 @@ class BMMBaseAgent(Agent, ABC):
             idx_min = np.where(ordinate < self.roi[0])[0][-1] if len(np.where(ordinate < self.roi[0])[0]) else None
             idx_max = np.where(ordinate > self.roi[1])[0][-1] if len(np.where(ordinate > self.roi[1])[0]) else None
             y = y[idx_min:idx_max]
-        md = ast.literal_eval(run.start["XDI"]["_comment"][0])
-        return md[f"{self.elements[0]}_position"], y
+        return run.baseline.data["xafs_x"][0], y
 
     def measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, dict]:
         args = [
