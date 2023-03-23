@@ -129,7 +129,7 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
         # determine golf-score of each point (minimum value)
         min_landscape = distances.min(axis=1)
         # generate 'uncertainty weights' - as a polynomial fit of the golf-score for each point
-        _x = np.arange(*self.bounds, self.motor_resolution)
+        _x = np.arange(*self.bounds, self.min_step_size)
         uwx = polyval(_x, polyfit(sorted_independents, min_landscape, deg=5))
         # Chose from the polynomial fit
         return pick_from_distribution(_x, uwx, num_picks=batch_size), centers
@@ -145,7 +145,7 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
                 logger.info(f"Suggestion {suggestion} is ignored as already in the knowledge cache")
                 continue
             else:
-                self.knowledge_cache.add(make_hashable(discretize(suggestion, self.motor_resolution)))
+                self.knowledge_cache.add(make_hashable(discretize(suggestion, self.min_step_size)))
                 kept_suggestions.append(suggestion)
 
         base_doc = dict(
