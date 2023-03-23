@@ -69,9 +69,11 @@ class Pandrosus:
     def __init__(self, uid=None, name=None):
         self.uid = uid
         self.name = name
+        self.element = None
+        self.edge = None
         self.group = None
         self.title = ""
-        # Larch parameters
+        ## Larch parameters
         self.pre = {
             "e0": None,
             "pre1": None,
@@ -102,8 +104,8 @@ class Pandrosus:
         }
         # plotting parameters
         self.xe = "energy (eV)"
-        self.xk = "wavenumber ($\AA^{-1}$)"  # noqa
-        self.xr = "radial distance ($\AA$)"  # noqa
+        self.xk = "wavenumber ($\AA^{-1}$)"
+        self.xr = "radial distance ($\AA$)"
         self.rmax = 6
 
         # flow control parameters
@@ -127,7 +129,7 @@ class Pandrosus:
             'transmission', 'fluorescence', or 'reference'
 
         """
-        table = run.primary.data
+        table = run.primary.data.read()
         self.group.energy = numpy.array(table["dcm_energy"])
         self.group.i0 = numpy.array(table["I0"])
         if mode == "flourescence":
@@ -201,10 +203,6 @@ class Pandrosus:
         self.prep()
 
     def prep(self):
-        # the next several lines seem necessary because the version
-        # of Larch currently at BMM is not correctly resolving
-        # pre1=pre2=None or norm1=norm2=None.  The following
-        # approximates Larch's defaults
         if self.pre["e0"] is None:
             find_e0(self.group.energy, mu=self.group.mu, group=self.group, _larch=LARCH)
             ezero = self.group.e0
