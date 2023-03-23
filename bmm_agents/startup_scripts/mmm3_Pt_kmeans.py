@@ -1,8 +1,8 @@
 from bluesky_adaptive.server import register_variable, shutdown_decorator, startup_decorator
 
-from bmm_agents.sklearn import ActiveKmeansAgent
+from bmm_agents.sklearn import MultiElementActiveKmeansAgent
 
-agent = ActiveKmeansAgent(
+agent = MultiElementActiveKmeansAgent(
     filename="Pt-Zr-Multimodal-PtDrivenKmeans",
     exp_mode="fluorescence",
     exp_data_type="mu",

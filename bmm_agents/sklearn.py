@@ -3,6 +3,7 @@ from typing import Iterable
 
 import numpy as np
 from bluesky_adaptive.agents.sklearn import ClusterAgentBase
+from bluesky_adaptive.server import register_variable
 from numpy.polynomial.polynomial import polyfit, polyval
 from numpy.typing import ArrayLike
 from scipy.stats import rv_discrete
@@ -194,3 +195,25 @@ def pick_from_distribution(x, px, num_picks=1):
         return my_gen.rvs(size=num_picks)
     else:
         return my_gen.rvs()
+
+
+class MultiElementActiveKmeansAgent(ActiveKmeansAgent):
+    """Meant for use with all elements."""
+
+    tell_count = 0
+
+    @property
+    def ask_on_tell(self) -> bool:
+        if (self.tell_count >= len(self.elements)) and self._ask_on_tell:
+            self.tell_count = 0
+            return True
+        else:
+            return False
+
+    @ask_on_tell.setter
+    def ask_on_tell(self, flag: bool):
+        self._ask_on_tell = flag
+
+    def server_registrations(self) -> None:
+        register_variable("internal ask_on_tell", self, "ask_on_tell")
+        return super().server_registrations()
