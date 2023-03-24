@@ -29,7 +29,7 @@ agent = KMeansMonarchSubject(
     subject_endstation_key="pdf",
     pdf_origin=(17.574, 4.075),
     bounds=(-29, 29),
-    ask_on_tell=False,
+    ask_on_tell=True,
     report_on_tell=True,
     queue_add_position="back",
     k_clusters=6,
@@ -46,8 +46,12 @@ def startup():
         for line in f:
             uids.append(line.strip().strip(",").strip("'"))
 
+        # Added for a manual knock down and debug
+        uids.append("ecef0421-e464-45e1-be6c-c532d7063708")
+        uids.append("256d67c5-6b3c-4738-8046-6838721084fc")
+        uids.append("ba02aa32-de24-431e-ba42-830243fc01e6")
+
     agent.tell_agent_by_uid(uids)
-    agent.ask_on_tell = True
     agent.add_suggestions_to_queue(1)
     agent.add_suggestions_to_subject_queue(6)
 
@@ -59,3 +63,4 @@ def shutdown_agent():
 
 register_variable("tell cache", agent, "tell_cache")
 register_variable("agent name", agent, "instance_name")
+register_variable("tell_count", agent, "tell_count")
