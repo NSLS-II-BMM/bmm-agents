@@ -31,6 +31,7 @@ agent = KMeansMonarchSubject(
     bounds=(-29, 29),
     ask_on_tell=False,
     report_on_tell=True,
+    queue_add_position="back",
     k_clusters=6,
     analyzed_element="Pt",
 )

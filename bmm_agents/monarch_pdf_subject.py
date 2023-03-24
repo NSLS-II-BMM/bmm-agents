@@ -34,7 +34,7 @@ class KMeansMonarchSubject(MonarchSubjectAgent, MultiElementActiveKmeansAgent):
         self._pdf_sample_number = value
 
     def subject_measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, Dict]:
-        return PDFBaseAgent.measurement_plan(relative_point + self._pdf_origin)
+        return "agent_redisAware_PDFcount", [relative_point + self._pdf_origin], {}
 
     def subject_ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         suggestions, centers = self._sample_uncertainty_proxy(batch_size)

@@ -32,6 +32,7 @@ agent = KMeansMonarchSubject(
     ask_on_tell=False,
     report_on_tell=True,
     k_clusters=6,
+    queue_add_position="back",
     analyzed_element="Zr",
 )
 
