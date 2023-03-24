@@ -1,4 +1,3 @@
-import ast
 import uuid
 from abc import ABC
 from typing import List, Literal, Optional, Sequence, Tuple
@@ -22,6 +21,7 @@ class BMMBaseAgent(Agent, ABC):
         *args,
         filename: str,
         exp_mode: Literal["fluorescence", "transmission"],
+        read_mode: Literal["fluorescence", "transmission"],
         exp_data_type: Literal["chi", "mu"],
         elements: Sequence[str],
         edges: Sequence[str],
@@ -38,6 +38,7 @@ class BMMBaseAgent(Agent, ABC):
         self._filename = filename
         self._edges = edges
         self._exp_mode = exp_mode
+        self._read_mode = read_mode
         self._abscissa = exp_data_type
         self._ordinate = "k" if exp_data_type == "chi" else "norm"
         self._elements = elements
@@ -78,6 +79,15 @@ class BMMBaseAgent(Agent, ABC):
     @exp_mode.setter
     def exp_mode(self, value: Literal["fluorescence", "transmission"]):
         self._exp_mode = value
+        self.close_and_restart(clear_tell_cache=True)
+
+    @property
+    def read_mode(self):
+        return self._read_mode
+
+    @read_mode.setter
+    def read_mode(self, value: Literal["fluorescence", "transmission"]):
+        self._read_mode = value
         self.close_and_restart(clear_tell_cache=True)
 
     @property
@@ -182,7 +192,7 @@ class BMMBaseAgent(Agent, ABC):
     def unpack_run(self, run):
         """Gets Chi(k) and absolute motor position"""
         run_preprocessor = Pandrosus()
-        run_preprocessor.fetch(run, mode=self.exp_mode)
+        run_preprocessor.fetch(run, mode=self.read_mode)
         y = getattr(run_preprocessor.group, self.exp_data_type)
         if self.roi is not None:
             ordinate = getattr(run_preprocessor.group, self._ordinate)
@@ -192,6 +202,7 @@ class BMMBaseAgent(Agent, ABC):
         return run.baseline.data["xafs_x"][0], y
 
     def measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, dict]:
+        """Works from relative points"""
         args = [
             self.sample_position_motors[0],
             *(self.element_origins[:, 0] + relative_point),

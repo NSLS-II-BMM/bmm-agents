@@ -73,7 +73,7 @@ class Pandrosus:
         self.edge = None
         self.group = None
         self.title = ""
-        ## Larch parameters
+        # Larch parameters
         self.pre = {
             "e0": None,
             "pre1": None,

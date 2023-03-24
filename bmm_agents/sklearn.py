@@ -99,9 +99,11 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
         return super().server_registrations()
 
     def tell(self, x, y):
-        """A tell that adds to the local discrete knowledge cache, as well as the standard caches"""
+        """A tell that adds to the local discrete knowledge cache, as well as the standard caches.
+        Uses relative coords for x"""
         self.knowledge_cache.add(make_hashable(discretize(x, self.min_step_size)))
-        doc = super().tell(x, y)
+        doc = super().tell(x - self.element_origins[0, self._element_idx], y)
+        doc["absolute_position_offset"] = self.element_origins[0, self._element_idx]
         return doc
 
     def _sample_uncertainty_proxy(self, batch_size=1):
@@ -159,6 +161,7 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
             latest_data=self.tell_cache[-1],
             requested_batch_size=batch_size,
             redundant_points_discarded=batch_size - len(kept_suggestions),
+            absoute_position_offset=self.element_origins[0, self._element_idx],
         )
         docs = [dict(suggestion=suggestion, **base_doc) for suggestion in kept_suggestions]
 

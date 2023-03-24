@@ -5,6 +5,7 @@ from bmm_agents.sklearn import MultiElementActiveKmeansAgent
 agent = MultiElementActiveKmeansAgent(
     filename="Pt-Zr-Multimodal-PtDrivenKmeans",
     exp_mode="fluorescence",
+    read_mode="transmission",
     exp_data_type="mu",
     elements=["Pt", "Zr"],
     edges=["L3", "K"],

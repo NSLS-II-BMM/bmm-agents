@@ -1,8 +1,16 @@
+import logging
+
 from bluesky_adaptive.server import register_variable, shutdown_decorator, startup_decorator
+from pdf_agents.base import PDFBaseAgent
 
-from bmm_agents.sklearn import MultiElementActiveKmeansAgent
+from bmm_agents.monarch_pdf_subject import KMeansMonarchSubject
 
-agent = MultiElementActiveKmeansAgent(
+logger = logging.getLogger(__name__)
+
+
+pdf_objects = PDFBaseAgent.get_beamline_objects()
+
+agent = KMeansMonarchSubject(
     filename="Pt-Zr-Multimodal-ZrDrivenKmeans",
     exp_mode="fluorescence",
     read_mode="transmission",
@@ -16,6 +24,10 @@ agent = MultiElementActiveKmeansAgent(
     exp_bounds="-200 -30 -10 25 13k",
     exp_steps="10 2 0.5 0.05k",
     exp_times="1 1 1 1",
+    subject_qserver=pdf_objects["qserver"],
+    subject_kafka_producer=pdf_objects["kafka_producer"],
+    subject_endstation_key="pdf",
+    pdf_origin=(17.574, 4.075),
     bounds=(-29, 29),
     ask_on_tell=False,
     report_on_tell=True,
@@ -36,6 +48,7 @@ def startup():
     agent.tell_agent_by_uid(uids)
     agent.ask_on_tell = True
     agent.add_suggestions_to_queue(1)
+    agent.add_suggestions_to_subject_queue(6)
 
 
 @shutdown_decorator
