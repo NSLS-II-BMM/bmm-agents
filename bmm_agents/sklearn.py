@@ -221,6 +221,6 @@ class MultiElementActiveKmeansAgent(ActiveKmeansAgent):
         register_variable("internal ask_on_tell", self, "ask_on_tell")
         return super().server_registrations()
 
-    def tell_agent_by_uid(self, uids: Iterable):
+    def tell(self, x, y):
         self.tell_count += 1
-        return super().tell_agent_by_uid(uids)
+        return super().tell(x, y)
