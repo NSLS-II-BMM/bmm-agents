@@ -1,9 +1,10 @@
 import logging
 from typing import Dict, Iterable, List, Sequence, Tuple
 
+import numpy as np
 from bluesky_adaptive.agents.base import MonarchSubjectAgent
+from bluesky_adaptive.server import register_variable
 from numpy.typing import ArrayLike
-from pdf_agents.agents import PDFBaseAgent
 
 from .sklearn import MultiElementActiveKmeansAgent
 
@@ -17,24 +18,19 @@ class KMeansMonarchSubject(MonarchSubjectAgent, MultiElementActiveKmeansAgent):
         pdf_origin: Tuple[float, float],
         **kwargs,
     ):
-        self._pdf_origin = pdf_origin
+        self.pdf_origin = np.array(pdf_origin)
         super().__init__(*args, **kwargs)
 
     @property
     def name(self):
-        "KMeansPDFMonarchBMMSubject"
+        return "KMeansPDFMonarchBMMSubject"
 
-    @property
-    def pdf_sample_number(self):
-        """XPDAQ Sample Number"""
-        return self._pdf_sample_number
-
-    @pdf_sample_number.setter
-    def pdf_sample_number(self, value: int):
-        self._pdf_sample_number = value
+    def server_registrations(self) -> None:
+        register_variable("pdf_origin", self, "pdf_origin")
+        return super().server_registrations()
 
     def subject_measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, Dict]:
-        return "agent_redisAware_PDFcount", [relative_point + self._pdf_origin], {}
+        return "agent_redisAware_PDFcount", [relative_point + self.pdf_origin], {}
 
     def subject_ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         suggestions, centers = self._sample_uncertainty_proxy(batch_size)
