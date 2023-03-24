@@ -1,7 +1,7 @@
 import logging
 
 from bluesky_adaptive.server import register_variable, shutdown_decorator, startup_decorator
-from pdf_agents.base import PDFBaseAgent
+from pdf_agents.agents import PDFBaseAgent
 
 from bmm_agents.monarch_pdf_subject import KMeansMonarchSubject
 

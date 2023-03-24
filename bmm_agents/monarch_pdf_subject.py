@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 
 from bluesky_adaptive.agents.base import MonarchSubjectAgent
 from numpy.typing import ArrayLike
-from pdf_agent.agents import PDFBaseAgent
+from pdf_agents.agents import PDFBaseAgent
 
 from .sklearn import MultiElementActiveKmeansAgent
 
