@@ -104,8 +104,8 @@ class Pandrosus:
         }
         # plotting parameters
         self.xe = "energy (eV)"
-        self.xk = "wavenumber ($\AA^{-1}$)"
-        self.xr = "radial distance ($\AA$)"
+        self.xk = "wavenumber ($\AA^{-1}$)"  # noqa: W605
+        self.xr = "radial distance ($\AA$)"  # noqa: W605
         self.rmax = 6
 
         # flow control parameters
