@@ -1,10 +1,22 @@
 # Borrowed from https://github.com/NSLS-II-BMM/profile_collection/blob/master/startup/BMM/larch_interface.py
 import larch.utils.show as lus
 import numpy
+import numpy as np
 from larch import Group, Interpreter
 from larch.xafs import autobk, find_e0, pre_edge, xftf
 
 LARCH = Interpreter()
+
+
+def discretize(value: np.typing.ArrayLike, resolution: np.typing.ArrayLike):
+    return np.floor(value / resolution)
+
+
+def make_hashable(x):
+    try:
+        return tuple(map(float, x))
+    except TypeError:
+        return float(x)
 
 
 class Pandrosus:
@@ -57,6 +69,8 @@ class Pandrosus:
     def __init__(self, uid=None, name=None):
         self.uid = uid
         self.name = name
+        self.element = None
+        self.edge = None
         self.group = None
         self.title = ""
         # Larch parameters
@@ -90,8 +104,8 @@ class Pandrosus:
         }
         # plotting parameters
         self.xe = "energy (eV)"
-        self.xk = "wavenumber ($\AA^{-1}$)"  # noqa
-        self.xr = "radial distance ($\AA$)"  # noqa
+        self.xk = "wavenumber ($\AA^{-1}$)"  # noqa: W605
+        self.xr = "radial distance ($\AA$)"  # noqa: W605
         self.rmax = 6
 
         # flow control parameters
@@ -115,7 +129,7 @@ class Pandrosus:
             'transmission', 'fluorescence', or 'reference'
 
         """
-        table = run.primary.data
+        table = run.primary.data.read()
         self.group.energy = numpy.array(table["dcm_energy"])
         self.group.i0 = numpy.array(table["I0"])
         if mode == "flourescence":
@@ -189,10 +203,6 @@ class Pandrosus:
         self.prep()
 
     def prep(self):
-        # the next several lines seem necessary because the version
-        # of Larch currently at BMM is not correctly resolving
-        # pre1=pre2=None or norm1=norm2=None.  The following
-        # approximates Larch's defaults
         if self.pre["e0"] is None:
             find_e0(self.group.energy, mu=self.group.mu, group=self.group, _larch=LARCH)
             ezero = self.group.e0

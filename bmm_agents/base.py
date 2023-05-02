@@ -1,4 +1,3 @@
-import ast
 import uuid
 from abc import ABC
 from typing import List, Literal, Optional, Sequence, Tuple
@@ -8,7 +7,7 @@ import numpy as np
 import tiled
 from bluesky_adaptive.agents.base import Agent, AgentConsumer
 from bluesky_kafka import Publisher
-from bluesky_queueserver_api.zmq import REManagerAPI
+from bluesky_queueserver_api.http import REManagerAPI
 from numpy.typing import ArrayLike
 
 from .utils import Pandrosus
@@ -21,10 +20,11 @@ class BMMBaseAgent(Agent, ABC):
         self,
         *args,
         filename: str,
-        edge: str,
         exp_mode: Literal["fluorescence", "transmission"],
+        read_mode: Literal["fluorescence", "transmission"],
         exp_data_type: Literal["chi", "mu"],
         elements: Sequence[str],
+        edges: Sequence[str],
         element_origins: Sequence[Tuple[float, float]],
         element_det_positions: Sequence[float],
         roi: Optional[Tuple] = None,
@@ -36,10 +36,11 @@ class BMMBaseAgent(Agent, ABC):
         **kwargs,
     ):
         self._filename = filename
-        self._edge = edge
+        self._edges = edges
         self._exp_mode = exp_mode
+        self._read_mode = read_mode
         self._abscissa = exp_data_type
-        self._ordinate = "k" if exp_data_type == "chi" else "E"  # TODO: Bruce is this E upper or lowercase?
+        self._ordinate = "k" if exp_data_type == "chi" else "norm"
         self._elements = elements
         self._element_origins = np.array(element_origins)
         self._element_det_positions = np.array(element_det_positions)
@@ -64,12 +65,12 @@ class BMMBaseAgent(Agent, ABC):
         self._filename = value
 
     @property
-    def edge(self):
-        return self._edge
+    def edges(self):
+        return self._edges
 
-    @edge.setter
-    def edge(self, value: str):
-        self._edge = value
+    @edges.setter
+    def edges(self, value: Sequence[str]):
+        self._edges = value
 
     @property
     def exp_mode(self):
@@ -81,13 +82,22 @@ class BMMBaseAgent(Agent, ABC):
         self.close_and_restart(clear_tell_cache=True)
 
     @property
+    def read_mode(self):
+        return self._read_mode
+
+    @read_mode.setter
+    def read_mode(self, value: Literal["fluorescence", "transmission"]):
+        self._read_mode = value
+        self.close_and_restart(clear_tell_cache=True)
+
+    @property
     def exp_data_type(self):
         return self._abscissa
 
     @exp_data_type.setter
     def exp_data_type(self, value: Literal["chi", "mu"]):
         self._abscissa = value
-        self._ordinate = "k" if value == "chi" else "E"  # TODO: Bruce is this E upper or lowercase?
+        self._ordinate = "k" if value == "chi" else "norm"
         self.close_and_restart(clear_tell_cache=True)
 
     @property
@@ -116,7 +126,7 @@ class BMMBaseAgent(Agent, ABC):
 
     @property
     def roi(self):
-        return self._roi_key
+        return self._roi
 
     @roi.setter
     def roi(self, value: Tuple[float, float]):
@@ -182,30 +192,32 @@ class BMMBaseAgent(Agent, ABC):
     def unpack_run(self, run):
         """Gets Chi(k) and absolute motor position"""
         run_preprocessor = Pandrosus()
-        run_preprocessor.fetch(run, mode=self.exp_mode)
+        run_preprocessor.fetch(run, mode=self.read_mode)
         y = getattr(run_preprocessor.group, self.exp_data_type)
         if self.roi is not None:
             ordinate = getattr(run_preprocessor.group, self._ordinate)
             idx_min = np.where(ordinate < self.roi[0])[0][-1] if len(np.where(ordinate < self.roi[0])[0]) else None
             idx_max = np.where(ordinate > self.roi[1])[0][-1] if len(np.where(ordinate > self.roi[1])[0]) else None
             y = y[idx_min:idx_max]
-        md = ast.literal_eval(run.start["XDI"]["_comment"][0])
-        return md[f"{self.elements[0]}_position"], y
+        return run.baseline.data["xafs_x"][0], y
 
     def measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, dict]:
+        """Works from relative points"""
         args = [
             self.sample_position_motors[0],
             *(self.element_origins[:, 0] + relative_point),
             self.sample_position_motors[1],
             *self.element_origins[:, 1],
+            *self.element_det_positions,
         ]
 
         kwargs = dict(
+            elements=self.elements,
+            edges=self.edges,
             filename=self.filename,
             nscans=1,
             start="next",
             mode=self.exp_mode,
-            edge=self.edge,
             sample=self.sample,
             preparation=self.preparation,
             bounds=self.exp_bounds,
@@ -213,12 +225,6 @@ class BMMBaseAgent(Agent, ABC):
             times=self.exp_times,
             snapshots=False,
             md={"relative_position": relative_point},
-        )
-        kwargs.update(
-            {
-                f"{element}_det_position": det_position
-                for element, det_position in zip(self.elements, self.element_det_positions)
-            }
         )
 
         return "agent_move_and_measure", args, kwargs
@@ -237,20 +243,20 @@ class BMMBaseAgent(Agent, ABC):
             config_file_path="/etc/bluesky/kafka.yml"
         )
         qs = REManagerAPI(http_server_uri=f"https://qserver.nsls2.bnl.gov/{beamline_tla}")
-        qs.set_authorization_key(api_key=None)
+        qs.set_authorization_key(api_key="zzzzz")
 
         kafka_consumer = AgentConsumer(
             topics=[
                 f"{beamline_tla}.bluesky.runengine.documents",
             ],
             consumer_config=kafka_config["runengine_producer_config"],
-            bootstrap_servers=kafka_config["bootstrap_servers"],
+            bootstrap_servers=",".join(kafka_config["bootstrap_servers"]),
             group_id=f"echo-{beamline_tla}-{str(uuid.uuid4())[:8]}",
         )
 
         kafka_producer = Publisher(
             topic=f"{beamline_tla}.mmm.bluesky.adjudicators",
-            bootstrap_servers=kafka_config["bootstrap_servers"],
+            bootstrap_servers=",".join(kafka_config["bootstrap_servers"]),
             key="{beamline_tla}.key",
             producer_config=kafka_config["runengine_producer_config"],
         )
@@ -258,7 +264,11 @@ class BMMBaseAgent(Agent, ABC):
         return dict(
             kafka_consumer=kafka_consumer,
             kafka_producer=kafka_producer,
-            tiled_data_node=tiled.client.from_profile(f"{beamline_tla}"),
-            tiled_agent_node=tiled.client.from_profile(f"{beamline_tla}_bluesky_sandbox"),
+            tiled_data_node=tiled.client.from_uri(
+                f"https://tiled.nsls2.bnl.gov/api/v1/node/metadata/{beamline_tla}/raw"
+            ),
+            tiled_agent_node=tiled.client.from_uri(
+                f"https://tiled.nsls2.bnl.gov/api/v1/node/metadata/{beamline_tla}/bluesky_sandbox"
+            ),
             qserver=qs,
         )
