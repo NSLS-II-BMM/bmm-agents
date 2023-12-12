@@ -203,11 +203,12 @@ class BMMBaseAgent(Agent, ABC):
 
     def measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, dict]:
         """Works from relative points"""
+        element_positions = self.element_origins + relative_point
         args = [
             self.sample_position_motors[0],
-            *(self.element_origins[:, 0] + relative_point),
+            *element_positions[:, 0],
             self.sample_position_motors[1],
-            *self.element_origins[:, 1],
+            *element_positions[:, 1],
             *self.element_det_positions,
         ]
 
@@ -265,10 +266,10 @@ class BMMBaseAgent(Agent, ABC):
             kafka_consumer=kafka_consumer,
             kafka_producer=kafka_producer,
             tiled_data_node=tiled.client.from_uri(
-                f"https://tiled.nsls2.bnl.gov/api/v1/node/metadata/{beamline_tla}/raw"
+                f"https://tiled.nsls2.bnl.gov/api/v1/metadata/{beamline_tla}/raw"
             ),
             tiled_agent_node=tiled.client.from_uri(
-                f"https://tiled.nsls2.bnl.gov/api/v1/node/metadata/{beamline_tla}/bluesky_sandbox"
+                f"https://tiled.nsls2.bnl.gov/api/v1/metadata/{beamline_tla}/bluesky_sandbox"
             ),
             qserver=qs,
         )
