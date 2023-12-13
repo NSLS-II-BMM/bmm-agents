@@ -66,6 +66,15 @@ class PassiveKmeansAgent(BMMBaseAgent, ClusterAgentBase):
             and self.exp_catalog[uid].start["XDI"]["Element"]["symbol"] == self.analyzed_element_and_edge[0]
         )
 
+    def report(self, **kwargs):
+        arr = np.array(self.observable_cache)
+        self.model.fit(arr)
+        return dict(
+            cluster_centers=self.model.cluster_centers_,
+            cache_len=len(self.independent_cache),
+            latest_data=self.tell_cache[-1],
+        )
+
 
 class ActiveKmeansAgent(PassiveKmeansAgent):
     def __init__(self, *args, bounds: ArrayLike, min_step_size: float = 0.01, **kwargs):
@@ -102,8 +111,8 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
     def tell(self, x, y):
         """A tell that adds to the local discrete knowledge cache, as well as the standard caches.
         Uses relative coords for x"""
-        self.knowledge_cache.add(make_hashable(discretize(x, self.min_step_size)))
         doc = super().tell(x - self.element_origins[0, self._element_idx], y)
+        self.knowledge_cache.add(make_hashable(discretize(doc["independent_variable"], self.min_step_size)))
         doc["absolute_position_offset"] = self.element_origins[0, self._element_idx]
         return doc
 
