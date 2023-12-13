@@ -28,8 +28,13 @@ agent = MultiElementActiveKmeansAgent(
 @startup_decorator
 def startup():
     agent.start()
-    # agent.ask_on_tell = True
-    # agent.add_suggestions_to_queue(1)
+    path = "/nsls2/data/pdf/shared/config/source/bmm-agents/bmm_agents/startup_scripts/historical_Pt_uids.txt"
+    with open(path, "r") as f:
+        uids = []
+        for line in f:
+            uids.append(line.strip().strip(",").strip("'"))
+
+    agent.tell_agent_by_uid(uids)
 
 
 @shutdown_decorator
