@@ -33,6 +33,7 @@ class BMMBaseAgent(Agent, ABC):
         exp_bounds: str = "-200 -30 -10 25 12k",
         exp_steps: str = "10 2 0.3 0.05k",
         exp_times: str = "0.5 0.5 0.5 0.5",
+        variable_motor_names: List[str] = ["xafs_x"],
         **kwargs,
     ):
         self._filename = filename
@@ -51,6 +52,7 @@ class BMMBaseAgent(Agent, ABC):
         self._exp_bounds = exp_bounds
         self._exp_steps = exp_steps
         self._exp_times = exp_times
+        self._variable_motor_names = variable_motor_names
 
         _default_kwargs = self.get_beamline_objects()
         _default_kwargs.update(kwargs)
@@ -199,11 +201,15 @@ class BMMBaseAgent(Agent, ABC):
             idx_min = np.where(ordinate < self.roi[0])[0][-1] if len(np.where(ordinate < self.roi[0])[0]) else None
             idx_max = np.where(ordinate > self.roi[1])[0][-1] if len(np.where(ordinate > self.roi[1])[0]) else None
             y = y[idx_min:idx_max]
-        return run.baseline.data["xafs_x"][0], y
+        return np.array([run.baseline.data[key][0] for key in self._variable_motor_names]), y
 
     def measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, dict]:
         """Works from relative points"""
-        element_positions = self.element_origins + relative_point
+        if len(relative_point) == 2:
+            element_positions = self.element_origins + relative_point
+        else:
+            element_positions = self.element_origins
+            element_positions[0] += relative_point
         args = [
             self.sample_position_motors[0],
             *element_positions[:, 0],

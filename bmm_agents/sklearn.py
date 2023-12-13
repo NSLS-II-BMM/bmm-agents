@@ -8,9 +8,10 @@ from numpy.polynomial.polynomial import polyfit, polyval
 from numpy.typing import ArrayLike
 from scipy.stats import rv_discrete
 from sklearn.cluster import KMeans
+from sklearn.linear_model import LinearRegression
 
 from .base import BMMBaseAgent
-from .utils import discretize, make_hashable
+from .utils import discretize, make_hashable, make_wafer_grid_list
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,16 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
         """
         # Borrowing from Dan's jupyter fun
         # from measurements, perform k-means
-        sorted_independents, sorted_observables = zip(*sorted(zip(self.independent_cache, self.observable_cache)))
+        try:
+            sorted_independents, sorted_observables = zip(
+                *sorted(zip(self.independent_cache, self.observable_cache))
+            )
+        except ValueError:
+            # Multidimensional case
+            sorted_independents, sorted_observables = zip(
+                *sorted(zip(self.independent_cache, self.observable_cache), key=lambda x: (x[0][0], x[0][1]))
+            )
+
         sorted_independents = np.array(sorted_independents)
         sorted_observables = np.array(sorted_observables)
         self.model.fit(sorted_observables)
@@ -131,11 +141,19 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
         distances = self.model.transform(sorted_observables)
         # determine golf-score of each point (minimum value)
         min_landscape = distances.min(axis=1)
-        # generate 'uncertainty weights' - as a polynomial fit of the golf-score for each point
-        _x = np.arange(*self.bounds, self.min_step_size)
-        uwx = polyval(_x, polyfit(sorted_independents, min_landscape, deg=5))
-        # Chose from the polynomial fit
-        return pick_from_distribution(_x, uwx, num_picks=batch_size), centers
+        if self.bounds.size == 2:
+            # Assume a 1d scan
+            # generate 'uncertainty weights' - as a polynomial fit of the golf-score for each point
+            _x = np.arange(*self.bounds, self.min_step_size)
+            uwx = polyval(_x, polyfit(sorted_independents, min_landscape, deg=5))
+            # Chose from the polynomial fit
+            return pick_from_distribution(_x, uwx, num_picks=batch_size), centers
+        else:
+            # assume a 2d scan, use a linear model to predict the uncertainty
+            grid = make_wafer_grid_list(*self.bounds.ravel(), step=self.min_step_size)
+            uncertainty_preds = LinearRegression().fit(sorted_independents, min_landscape).predict(grid)
+            top_indicies = np.argsort(uncertainty_preds)[-batch_size:]
+            return grid[top_indicies], centers
 
     def ask(self, batch_size=1):
         suggestions, centers = self._sample_uncertainty_proxy(batch_size)
@@ -144,11 +162,14 @@ class ActiveKmeansAgent(PassiveKmeansAgent):
             suggestions = [suggestions]
         # Keep non redundant suggestions and add to knowledge cache
         for suggestion in suggestions:
-            if suggestion in self.knowledge_cache:
-                logger.info(f"Suggestion {suggestion} is ignored as already in the knowledge cache")
+            hashable_suggestion = make_hashable(discretize(suggestion, self.min_step_size))
+            if hashable_suggestion in self.knowledge_cache:
+                logger.info(
+                    f"Suggestion {suggestion} is ignored as already in the knowledge cache: {hashable_suggestion}"
+                )
                 continue
             else:
-                self.knowledge_cache.add(make_hashable(discretize(suggestion, self.min_step_size)))
+                self.knowledge_cache.add(hashable_suggestion)
                 kept_suggestions.append(suggestion)
 
         base_doc = dict(

@@ -1,3 +1,4 @@
+import numpy as np
 from bluesky_adaptive.server import register_variable, shutdown_decorator, startup_decorator
 
 from bmm_agents.sklearn import MultiElementActiveKmeansAgent
@@ -16,7 +17,7 @@ agent = MultiElementActiveKmeansAgent(
     exp_bounds="-200 -30 -10 25 13k",
     exp_steps="10 2 0.5 0.05k",
     exp_times="1 1 1 1",
-    bounds=(-32, 32),
+    bounds=np.array([(-32, 32), (-32, 32)]),
     ask_on_tell=False,
     report_on_tell=True,
     k_clusters=6,

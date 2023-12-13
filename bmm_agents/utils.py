@@ -19,6 +19,19 @@ def make_hashable(x):
         return float(x)
 
 
+def make_wafer_grid_list(x_min, x_max, y_min, y_max, step):
+    """
+    Make the list of all of the possible 2d points that lie within a circle of the origin
+    """
+    x = np.arange(x_min, x_max, step)
+    y = np.arange(y_min, y_max, step)
+    xx, yy = np.meshgrid(x, y)
+    center = np.array([x_min + (x_max - x_min) / 2, y_min + (y_max - y_min) / 2])
+    distance = np.sqrt((xx - center[0]) ** 2 + (yy - center[1]) ** 2)
+    radius = min((x_max - x_min) / 2, (y_max - y_min) / 2)
+    return np.array([xx[distance < radius], yy[distance < radius]]).T
+
+
 class Pandrosus:
     """A thin wrapper around basic XAS data processing for individual
     data sets as implemented in Larch.
