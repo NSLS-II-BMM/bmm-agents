@@ -32,7 +32,7 @@ agent = KMeansMonarchSubject(
     sample="AlPtNi wafer pretend-binary PtNi",
     preparation="AlPtNi codeposited on a silica wafer",
     exp_bounds="-200 -30 -10 25 13k",
-    exp_steps="10 2 0.5 0.05k",
+    exp_steps="10 2 0.3 0.05k",
     exp_times="1 1 1 1",
     # PDF Args
     subject_qserver=pdf_objects["qserver"],
