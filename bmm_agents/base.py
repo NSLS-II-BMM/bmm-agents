@@ -218,7 +218,6 @@ class BMMBaseAgent(Agent, ABC):
             *element_positions[:, 1],
             *self.element_det_positions,
         ]
-        args = sanitize_doc(args)  # Convert numpy types to python types
 
         kwargs = dict(
             elements=self.elements,
@@ -235,6 +234,8 @@ class BMMBaseAgent(Agent, ABC):
             snapshots=False,
             md={"relative_position": relative_point},
         )
+        args = sanitize_doc(args)  # Convert numpy types to python types
+        kwargs = sanitize_doc(kwargs)  # Convert numpy types to python types
 
         return "agent_move_and_measure", args, kwargs
 
