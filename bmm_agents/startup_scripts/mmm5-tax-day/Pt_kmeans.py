@@ -28,10 +28,10 @@ agent = ActiveKmeansAgent(
     exp_steps="10 2 0.3 0.05k",
     exp_times="1 1 1 1",
     variable_motor_names=("xafs_x", "xafs_y"),
-    bounds=np.array([(-31, 31), (-31, 31)]),
+    bounds=np.array([(-30, 30), (-30, 30)]),
     ask_on_tell=False,
     report_on_tell=True,
-    k_clusters=6,
+    k_clusters=4,
     analyzed_element="Pt",
     **beamline_objects
 )
