@@ -44,7 +44,9 @@ def startup():
     with open(path, "r") as f:
         uids = []
         for line in f:
-            uids.append(line.strip().strip(",").strip("'"))
+            uid = line.strip().strip(",").strip("'")
+            if agent.trigger_condition(uid):
+                uids.append()
 
     agent.element_origins = old_mmm4_origin
     agent.tell_agent_by_uid(uids)
