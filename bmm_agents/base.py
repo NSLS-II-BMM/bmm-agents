@@ -8,6 +8,7 @@ import tiled
 from bluesky_adaptive.agents.base import Agent, AgentConsumer
 from bluesky_kafka import Publisher
 from bluesky_queueserver_api.http import REManagerAPI
+from event_model import sanitize_doc
 from numpy.typing import ArrayLike
 
 from .utils import Pandrosus
@@ -217,6 +218,7 @@ class BMMBaseAgent(Agent, ABC):
             *element_positions[:, 1],
             *self.element_det_positions,
         ]
+        args = sanitize_doc(args)  # Convert numpy types to python types
 
         kwargs = dict(
             elements=self.elements,
