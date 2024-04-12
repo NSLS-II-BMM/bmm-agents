@@ -60,7 +60,7 @@ def startup():
         for line in f:
             uid = line.strip().strip(",").strip("'")
             if agent.trigger_condition(uid):
-                uids.append()
+                uids.append(uid)
 
     agent.element_origins = old_mmm4_origin
     agent.tell_agent_by_uid(uids)
