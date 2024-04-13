@@ -27,7 +27,7 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
 
     @property
     def name(self):
-        return f"{self.name_prefix}KMeansPDFMonarchBMMSubject"
+        return f"{self.name_prefix}KMeansBMMMonarchPDFSubject"
 
     @property
     def pdf_control(self):
