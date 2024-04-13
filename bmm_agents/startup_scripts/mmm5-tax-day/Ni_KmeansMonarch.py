@@ -1,19 +1,26 @@
+import logging
 import os
 
 import numpy as np
 import tiled.client.node  # noqa: F401
 from bluesky_adaptive.server import register_variable, shutdown_decorator, startup_decorator
+from pdf_agents.agents import PDFBaseAgent
 
-from bmm_agents.sklearn import ActiveKmeansAgent
+from bmm_agents.monarch_pdf_subject import KMeansMonarchSubject
 
-beamline_objects = ActiveKmeansAgent.get_beamline_objects()
+logger = logging.getLogger(__name__)
+
+
+beamline_objects = KMeansMonarchSubject.get_beamline_objects()
 beamline_objects["qserver"].set_authorization_key(api_key=os.getenv("HTTPSERVER_API_KEY", "zzzzz"))
 
+pdf_objects = PDFBaseAgent.get_beamline_objects()
+pdf_objects["qserver"].set_authorization_key(api_key=os.getenv("HTTPSERVER_API_KEY", "yyyyy"))
 
 old_mmm4_origin = [[186.307, 89.276], [186.384, 89.305]]
 new_mmm5_origin = [[174.550, 103.806], [175.127, 103.484]]
 
-agent = ActiveKmeansAgent(
+agent = KMeansMonarchSubject(
     filename="PtNi-Multimodal-PtDrivenKmeans",
     exp_mode="fluorescence",
     read_mode="transmission",
@@ -27,12 +34,19 @@ agent = ActiveKmeansAgent(
     exp_bounds="-200 -30 -10 25 13k",
     exp_steps="10 2 0.3 0.05k",
     exp_times="1 1 1 1",
-    variable_motor_names=("xafs_x", "xafs_y"),
+    # PDF Args
+    subject_qserver=pdf_objects["qserver"],
+    subject_kafka_producer=pdf_objects["kafka_producer"],
+    subject_endstation_key="pdf",
+    pdf_origin=(-128.85, 49.91),
+    # Active Kmeans Args
     bounds=np.array([(-30, 30), (-30, 30)]),
+    # BS Adaptive Args
     ask_on_tell=False,
     report_on_tell=True,
     k_clusters=4,
-    analyzed_element="Pt",
+    analyzed_element="Ni",
+    queue_add_position="back",
     **beamline_objects
 )
 
@@ -50,14 +64,19 @@ def load_uids(path):
 @startup_decorator
 def startup():
     agent.start()
-    path = "/nsls2/data/bmm/shared/config/source/bmm-agents/bmm_agents/startup_scripts/historical_mmm4_uids.txt"
+    path = (
+        "/nsls2/data/bmm/shared/config/source/bmm-agents/"
+        "bmm_agents/startup_scripts/mmm5-tax-day/historical_mmm4_uids.txt"
+    )
     uids = load_uids(path)
 
     agent.element_origins = old_mmm4_origin
     agent.tell_agent_by_uid(uids)
     agent.element_origins = new_mmm5_origin
 
-    path = "/nsls2/data/bmm/shared/config/source/bmm-agents/bmm_agents/startup_scripts/mmm5-tax-day/fri-uids.txt"
+    path = (
+        "/nsls2/data/bmm/shared/config/source/bmm-agents/" "bmm_agents/startup_scripts/mmm5-tax-day/fri-uids.txt"
+    )
     uids = load_uids(path)
     agent.tell_agent_by_uid(uids)
 

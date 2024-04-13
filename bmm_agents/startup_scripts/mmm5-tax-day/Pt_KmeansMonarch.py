@@ -38,33 +38,47 @@ agent = KMeansMonarchSubject(
     subject_qserver=pdf_objects["qserver"],
     subject_kafka_producer=pdf_objects["kafka_producer"],
     subject_endstation_key="pdf",
-    pdf_origin=(17.574, 4.075),
+    pdf_origin=(-128.85, 49.91),
     # Active Kmeans Args
-    bounds=np.array([(-31, 31), (-31, 31)]),
+    bounds=np.array([(-30, 30), (-30, 30)]),
     # BS Adaptive Args
     ask_on_tell=False,
     report_on_tell=True,
-    k_clusters=6,
+    k_clusters=4,
     analyzed_element="Pt",
     queue_add_position="back",
     **beamline_objects
 )
 
 
-@startup_decorator
-def startup():
-    agent.start()
-    path = "/nsls2/data/bmm/shared/config/source/bmm-agents/bmm_agents/startup_scripts/historical_mmm4_uids.txt"
+def load_uids(path):
     with open(path, "r") as f:
         uids = []
         for line in f:
             uid = line.strip().strip(",").strip("'")
             if agent.trigger_condition(uid):
                 uids.append(uid)
+    return uids
+
+
+@startup_decorator
+def startup():
+    agent.start()
+    path = (
+        "/nsls2/data/bmm/shared/config/source/bmm-agents/"
+        "bmm_agents/startup_scripts/mmm5-tax-day/historical_mmm4_uids.txt"
+    )
+    uids = load_uids(path)
 
     agent.element_origins = old_mmm4_origin
     agent.tell_agent_by_uid(uids)
     agent.element_origins = new_mmm5_origin
+
+    path = (
+        "/nsls2/data/bmm/shared/config/source/bmm-agents/" "bmm_agents/startup_scripts/mmm5-tax-day/fri-uids.txt"
+    )
+    uids = load_uids(path)
+    agent.tell_agent_by_uid(uids)
 
 
 @shutdown_decorator

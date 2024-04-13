@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class PassiveKmeansAgent(BMMBaseAgent, ClusterAgentBase):
     def __init__(self, k_clusters, analyzed_element, *args, **kwargs):
-        estimator = KMeans(k_clusters)
+        estimator = KMeans(k_clusters, n_init="auto")
         _default_kwargs = self.get_beamline_objects()
         _default_kwargs.update(kwargs)
 
