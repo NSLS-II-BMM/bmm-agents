@@ -25,22 +25,22 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
 
     @property
     def name(self):
-        return "{self.analyzed_element}-KMeansPDFMonarchBMMSubject"
+        return f"{self.analyzed_element_and_edge[0]}-KMeansPDFMonarchBMMSubject"
 
-    @property
-    def pdf_control(self):
-        return self._pdf_control
+    # @property
+    # def pdf_control(self):
+    #     return self._pdf_control
 
-    @pdf_control.setter
-    def pdf_control(self, value):
-        if value in {True, "true", "True", "TRUE", 1}:
-            self.pdf_control = True
-        else:
-            self.pdf_control = False
+    # @pdf_control.setter
+    # def pdf_control(self, value):
+    #     if value in {True, "true", "True", "TRUE", 1}:
+    #         self.pdf_control = True
+    #     else:
+    #         self.pdf_control = False
 
     def server_registrations(self) -> None:
         register_variable("pdf_origin", self, "pdf_origin")
-        self._register_property("pdf_control")
+        register_variable("PDF Control", self, "_pdf_control")
         return super().server_registrations()
 
     def subject_measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, Dict]:
