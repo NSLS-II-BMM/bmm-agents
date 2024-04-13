@@ -4,6 +4,7 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import numpy as np
 from bluesky_adaptive.agents.base import MonarchSubjectAgent
 from bluesky_adaptive.server import register_variable
+from bluesky_queueserver_api import BPlan
 from numpy.typing import ArrayLike
 
 from .sklearn import ActiveKmeansAgent
@@ -31,7 +32,7 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
     @property
     def pdf_control(self):
         return self._pdf_control
-    
+
     @pdf_control.setter
     def pdf_control(self, value):
         if value in {True, "true", "True", "TRUE", 1}:
@@ -67,3 +68,63 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
 
     def subject_ask_condition(self):
         return self.pdf_control
+
+    # ---- TODO: Remove the following block on upstream integration into Bluesky Adaptive ---- #
+    def _add_to_queue(
+        self,
+        next_points,
+        uid,
+        *,
+        re_manager=None,
+        position=None,
+        plan_factory=None,
+    ):
+        """
+        Adds a single set of points to the queue as bluesky plans
+
+        Parameters
+        ----------
+        next_points : Iterable
+            New points to measure
+        uid : str
+        re_manager : Optional[bluesky_queueserver_api.api_threads.API_Threads_Mixin]
+            Defaults to self.re_manager
+        position : Optional[Union[int, Literal['front', 'back']]]
+            Defaults to self.queue_add_position
+        plan_factory : Optional[Callable]
+            Function to generate plans from points. Defaults to self.measurement_plan.
+            Callable should return a tuple of (plan_name, args, kwargs)
+
+        Returns
+        -------
+
+        """
+        for point in next_points:
+            plan_name, args, kwargs = self.measurement_plan(point)
+            kwargs.setdefault("md", {})
+            kwargs["md"].update(self.default_plan_md)
+            kwargs["md"]["agent_ask_uid"] = uid
+            plan = BPlan(
+                plan_name,
+                *args,
+                **kwargs,
+            )
+            if re_manager is None:
+                re_manager = self.re_manager
+            r = re_manager.item_add(plan, pos=self.queue_add_position if position is None else position)
+            logger.debug(f"Sent http-server request for point {point}\n." f"Received reponse: {r}")
+        return
+
+    def add_suggestions_to_subject_queue(self, batch_size: int):
+        """Calls ask, adds suggestions to queue, and writes out event"""
+        next_points, uid = self._ask_and_write_events(batch_size, self.subject_ask, "subject_ask")
+        logger.info("Issued ask to subject and adding to the queue. {uid}")
+        self._add_to_queue(
+            next_points,
+            uid,
+            re_manager=self.subject_re_manager,
+            position="front",
+            plan_factory=self.subject_measurement_plan,
+        )
+
+    # ---- TODO: Remove the following block on upstream integration into Bluesky Adaptive ---- #
