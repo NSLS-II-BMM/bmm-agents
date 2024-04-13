@@ -41,6 +41,7 @@ agent = KMeansMonarchSubject(
     pdf_origin=(-128.85, 49.91),
     pdf_control=False,
     # Active Kmeans Args
+    variable_motor_names=("xafs_x", "xafs_y"),
     bounds=np.array([(-30, 30), (-30, 30)]),
     # BS Adaptive Args
     ask_on_tell=False,
