@@ -99,8 +99,9 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
         -------
 
         """
+        plan_factory = plan_factory or self.measurement_plan
         for point in next_points:
-            plan_name, args, kwargs = self.measurement_plan(point)
+            plan_name, args, kwargs = plan_factory(point)
             kwargs.setdefault("md", {})
             kwargs["md"].update(self.default_plan_md)
             kwargs["md"]["agent_ask_uid"] = uid
