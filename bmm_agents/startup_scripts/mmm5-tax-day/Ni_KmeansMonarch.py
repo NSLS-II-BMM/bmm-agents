@@ -39,6 +39,7 @@ agent = KMeansMonarchSubject(
     subject_kafka_producer=pdf_objects["kafka_producer"],
     subject_endstation_key="pdf",
     pdf_origin=(-128.85, 49.91),
+    pdf_control=False,
     # Active Kmeans Args
     bounds=np.array([(-30, 30), (-30, 30)]),
     # BS Adaptive Args

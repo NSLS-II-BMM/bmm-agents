@@ -16,10 +16,11 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
         self,
         *args,
         pdf_origin: Tuple[float, float],
+        pdf_control: bool = False,
         **kwargs,
     ):
         self.pdf_origin = np.array(pdf_origin)
-        self._pdf_control = False
+        self._pdf_control = pdf_control
         super().__init__(*args, **kwargs)
 
     @property
