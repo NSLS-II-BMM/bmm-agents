@@ -26,23 +26,22 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
 
     @property
     def name(self):
-        return f"{self.name_prefix}-KMeansPDFMonarchBMMSubject"
+        return f"{self.name_prefix}KMeansPDFMonarchBMMSubject"
 
     @property
-    def bool_pdf_control(self):
-        return bool(self._pdf_control)
-
-    # @pdf_control.setter
-    # def pdf_control(self, value):
-    #     if value in {True, "true", "True", "TRUE", 1}:
-    #         self.pdf_control = True
-    #     else:
-    #         self.pdf_control = False
+    def pdf_control(self):
+        return self._pdf_control
+    
+    @pdf_control.setter
+    def pdf_control(self, value):
+        if value in {True, "true", "True", "TRUE", 1}:
+            self._pdf_control = True
+        else:
+            self._pdf_control = False
 
     def server_registrations(self) -> None:
         register_variable("pdf_origin", self, "pdf_origin")
-        register_variable("PDF Control", self, "_pdf_control")
-        register_variable("bool_pdf_control", self, "bool_pdf_control")
+        self._register_property("PDF Control", "pdf_control")
         return super().server_registrations()
 
     def subject_measurement_plan(self, relative_point: ArrayLike) -> Tuple[str, List, Dict]:
