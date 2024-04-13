@@ -21,11 +21,12 @@ class KMeansMonarchSubject(MonarchSubjectAgent, ActiveKmeansAgent):
     ):
         self.pdf_origin = np.array(pdf_origin)
         self._pdf_control = pdf_control
+        self.name_prefix = f"{kwargs.get('analyzed_element','')}-"
         super().__init__(*args, **kwargs)
 
     @property
     def name(self):
-        return f"{self.analyzed_element_and_edge[0]}-KMeansPDFMonarchBMMSubject"
+        return f"{self.name_prefix}-KMeansPDFMonarchBMMSubject"
 
     # @property
     # def pdf_control(self):
